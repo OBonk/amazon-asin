@@ -4,24 +4,30 @@ import asyncio
 import threading
 import random
 
-def begin(key,zipcode,stop):
-    task = asyncio.ensure_future(run(key,zipcode))
-    stop.state = NORMAL
-async def run(key,zipcode):
-    await amz.main(key,zipcode)
+async def begin(key,zipcode,runner):
+    await run(key,zipcode,runner)
+    
+async def run(key,zipcode,runner):
+    await amz.main(key,zipcode,runner)
+def stopper(runner):
+    #print(running)
+    #if running:
+        #raise (KeyboardInterrupt)
+    runner.append("stop")
 
 
-def do_tasks(async_loop):
+
+def do_tasks(async_loop,key,zipcode,runner):
     """ Button-Event-Handler starting the asyncio part. """
-    threading.Thread(target=_asyncio_thread, args=(async_loop,)).start()
-
+    threading.Thread(target=_asyncio_thread, args=(async_loop,key,zipcode,runner)).start()
+def _asyncio_thread(async_loop,key,zipcode,runner):
+    async_loop.run_until_complete(begin(key,zipcode,runner))
 
 def main(async_loop):
     root = Tk()
     fg = "#00B900"
     bg = "#404040"
-
-    loop = asyncio.get_event_loop()
+    runner = []
     root.title("Amazon Asin Search")
     root.geometry("170x200")
     root.configure(background="#000000")
@@ -33,9 +39,9 @@ def main(async_loop):
     keyL.grid(row=3,column =2, columnspan = 1, rowspan = 1,padx = 10, pady = 2)
     searchkey = Entry(foreground=fg,background=bg,width =20)
     searchkey.grid(row=4,column=2, columnspan = 1, rowspan = 1,padx = 10, pady = 2)
-    go = Button(text="Search",foreground=fg,background=bg,width =20,command= lambda: begin(searchkey.get(),searchzip.get(),stop))
+    go = Button(text="Search",foreground=fg,background=bg,width =20,command= lambda: do_tasks(async_loop,searchkey.get(),searchzip.get(),runner))
     go.grid(row=5,column=2, columnspan = 1, rowspan = 1,padx = 10, pady = 2)
-    stop = Button(text="Stop",state = DISABLED,foreground=fg,background=bg,width =20,command=amz.stop)
+    stop = Button(text="Stop",state = NORMAL,foreground=fg,background=bg,width =20,command= lambda: stopper(runner))
     stop.grid(row=6,column=2, columnspan = 1, rowspan = 1,padx = 10, pady = 2)
     root.mainloop()
 if __name__ == '__main__':

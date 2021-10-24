@@ -2,6 +2,7 @@
 # coding: utf-8
 
 
+from typing import Awaitable
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -15,11 +16,9 @@ from random import randint
 import csv
 
 #stop program
-class InterruptExecution (Exception):
+class InterruptExecution(Exception):
     pass
 
-def stop():
-    raise (InterruptExecution("Stopping asin collection"))
 # Wait for any element to get loaded
 # BY TAG
 def wfe_by_tag(driver, el_tag):
@@ -164,7 +163,7 @@ def generate_file_name(file_name, file_ext):
             return file_path
 
 
-def main(PRODUCT_NAME,ZIP_CODE):
+def main(PRODUCT_NAME,ZIP_CODE,runner):
     base_url = "https://www.amazon.com/"
     cwd = os.getcwd()
 
@@ -237,6 +236,9 @@ def main(PRODUCT_NAME,ZIP_CODE):
                     next_btn[0].click()
                 else:
                     go_next = False
+            if len(runner) >0:
+                print("recieved stop command")
+                break
         
         # Save the asins
         with open(f'{asin_directory}/{file_name}', 'w', newline='', encoding='UTF8') as f:
@@ -244,7 +246,7 @@ def main(PRODUCT_NAME,ZIP_CODE):
             writer.writerow(['Asins'])
             for a in all_asins:
                 writer.writerow([a])
-    except InterruptExecution:
+    except KeyboardInterrupt:
         # Save the asins
         with open(f'{asin_directory}/{file_name}', 'w', newline='', encoding='UTF8') as f:
             writer = csv.writer(f)
@@ -254,6 +256,6 @@ def main(PRODUCT_NAME,ZIP_CODE):
 
 
 
-
+    
     driver.quit()
-
+    return Awaitable
