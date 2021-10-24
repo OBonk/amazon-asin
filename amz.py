@@ -7,6 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException
 import chromedriver_autoinstaller
 from time import sleep
 import os
@@ -163,7 +164,7 @@ def generate_file_name(file_name, file_ext):
             return file_path
 
 
-def main(PRODUCT_NAME,ZIP_CODE,runner):
+def main(PRODUCT_NAME,ZIP_CODE,runner,coupon,max=-1,min=0):
     base_url = "https://www.amazon.com/"
     cwd = os.getcwd()
 
@@ -211,14 +212,47 @@ def main(PRODUCT_NAME,ZIP_CODE,runner):
 
     # Search Product
     search_box = driver.find_element(By.ID, 'twotabsearchtextbox')
-    type_slowly(search_box, PRODUCT_NAME)
+    type_slowly(search_box, PRODUCT_NAME +" all sections")
     sleep(1)
     driver.find_element(By.ID, 'nav-search-submit-button').click()
     sleep(3)
     # Select 4 Stars and up
     driver.find_element(By.XPATH, '//section[@aria-label="4 Stars & Up"]').click()
-    
-
+    sleep(1)
+    if coupon:
+        name = "Today's Deals"
+        deals = driver.find_element(By.XPATH, f'//span[text()="{name}"]')
+        #driver.execute_script("arguments[0].scrollIntoView();", deals)
+        #sleep(1)
+        deals.click()
+        
+        sleep(3)
+    if max > 0:
+        max_box = driver.find_element(By.ID, 'high-price')
+        type_slowly(max_box, str(max))
+        sleep(1)
+        min_box = driver.find_element(By.ID, 'low-price')
+        type_slowly(min_box, str(min))
+        sleep(1)
+        try:
+            driver.find_element(By.XPATH, '''//span[text()="
+            Go
+         "]''').click()
+        except ElementClickInterceptedException as e:
+            res = str(e)
+            spot = res.find("aria-labelledby=")
+            start = spot + 16
+            print(res[start])
+            c = start
+            lab = ""
+            while res[c] != ">":
+                lab += res[c]
+                c+= 1
+            driver.find_element(By.XPATH, f'//input[@aria-labelledby={lab}]').click()
+        except Exception as e:
+            print("\n**************\n different error\n************\n")
+            print(e)
+        sleep(3)
 
     try:
         # Collect all the asins
@@ -258,4 +292,4 @@ def main(PRODUCT_NAME,ZIP_CODE,runner):
 
     
     driver.quit()
-    return Awaitable
+    return "done"
